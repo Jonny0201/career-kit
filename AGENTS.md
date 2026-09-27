@@ -70,6 +70,9 @@ salary, blacklist, seniority, template or submission authorization is a default.
   refresh keeps unchanged document approvals; changed JD content/facts require
   affected work to be reviewed. Actual submitted preparation snapshots are not
   overwritten. Readiness does not press or authorize Submit.
+  A later user/HR request may generate reviewed `correspondence` documents with
+  an exact request reference; keep them separate from the original submission
+  and obtain a fresh Send authorization. Do not invent a duplicate application.
 - **Mail:** request-scoped read, associate known applications, classify and
   draft. Confirm exact recipients/body/attachments locally with the user. Only
   a separate current authorization permits one Send. A document approval does

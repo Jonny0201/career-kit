@@ -28,6 +28,14 @@ def compact(text):
     return "".join(unicodedata.normalize("NFKC", text).split())
 
 
+def document_slot(value):
+    purpose = value.get("purpose", "submission")
+    base = value.get("translation_of", {}).get("source_purpose", "submission") if purpose == "review_only" else purpose
+    container = "correspondence_documents" if base == "correspondence" else "documents"
+    slot = value["document_type"] if purpose != "review_only" else value["document_type"] + ":review_only:" + value["language"]
+    return container, slot
+
+
 class Documents:
     def __init__(self, paths):
         self.paths = paths
@@ -85,7 +93,6 @@ class Documents:
 
     def render(self, application_id, identifier, content):
         app = self.store.get("application", application_id)
-        require(app["payload"]["submitted_at"] is None, "APPLICATION_ALREADY_SUBMITTED", "do not replace the documents attached to an actual submission")
         check = self.check(identifier)
         require(check["ok"], "DOCUMENT_DEPENDENCY_MISSING", "install only the selected profile's missing tools")
         profile = self.store.get("document_profile", identifier)
@@ -93,19 +100,27 @@ class Documents:
         kind = content.get("document_type")
         language = content.get("language")
         purpose = content.get("purpose", "submission")
-        require(purpose in {"submission", "review_only"}, "DOCUMENT_PURPOSE_INVALID", "document is for submission or review only")
+        require(purpose in {"submission", "review_only", "correspondence"}, "DOCUMENT_PURPOSE_INVALID", "declare submission, review-only or separately requested correspondence")
+        if purpose == "correspondence":
+            require(isinstance(content.get("request_ref"), str) and content["request_ref"].strip(),
+                    "DOCUMENT_REQUEST_REQUIRED", "bind correspondence to the actual user/HR follow-up request")
         translation = None
         if purpose == "review_only":
             ref = content.get("translation_of", {})
             original = self.store.get("document", ref.get("id", ""), ref.get("revision"))
+            source_purpose = original["payload"].get("purpose", "submission")
+            source_container = "correspondence_documents" if source_purpose == "correspondence" else "documents"
             require(ref.get("revision") == original["revision"] and kind == "cover_letter"
                     and original["payload"]["application_id"] == application_id
-                    and original["payload"]["document_type"] == kind and original["payload"].get("purpose", "submission") == "submission"
-                    and app["payload"]["documents"].get(kind) == ref,
+                    and original["payload"]["document_type"] == kind and source_purpose in {"submission", "correspondence"}
+                    and app["payload"].get(source_container, {}).get(kind) == ref,
                     "DOCUMENT_TRANSLATION_INVALID", "bind a review-only companion to this application's current submission letter")
-            translation = {**ref, "artifact_sha256": original["payload"]["artifact_sha256"]}
+            translation = {**ref, "artifact_sha256": original["payload"]["artifact_sha256"], "source_purpose": source_purpose}
+        correspondence = purpose == "correspondence" or (translation and translation["source_purpose"] == "correspondence")
+        require(app["payload"]["submitted_at"] is None or correspondence, "APPLICATION_ALREADY_SUBMITTED",
+                "preserve the submitted documents; use separately requested correspondence for a follow-up")
         require(kind in manifest["document_types"] and language in manifest["languages"], "DOCUMENT_PROFILE_INVALID", "profile does not support this document/language")
-        if kind == "cover_letter":
+        if kind == "cover_letter" and not correspondence:
             requirements = app["payload"].get("requirements")
             require(requirements and requirements["cover_letter"] in {"required", "optional"},
                     "DOCUMENT_NOT_REQUESTED", "Cover Letter follows actual application-page requirements, not the JD alone")
@@ -187,6 +202,7 @@ class Documents:
             record = self.store.put("document", doc_id, {
                 "application_id": application_id, "document_type": kind, "language": language,
                 "purpose": purpose, "translation_of": translation, "job_content_hash": job_content_hash(app["payload"]["job"]),
+                "request_ref": content.get("request_ref"),
                 "profile_id": identifier, "profile_hash": check["code_hash"],
                 "facts_revision": bank["revision"], "identity_revision": identity["revision"],
                 "content_hash": canonical_sha256(content), "content_snapshot": content,
@@ -205,22 +221,22 @@ class Documents:
         value = document["payload"]
         require(digest(self.paths.permanent(value["artifact"])) == value["artifact_sha256"], "DOCUMENT_CHANGED", "document bytes changed")
         ref = {"id": doc_id, "revision": document["revision"]}
-        slot = value["document_type"] if value.get("purpose", "submission") == "submission" else value["document_type"] + ":review_only:" + value["language"]
-        if app["payload"]["documents"].get(slot) != ref:
-            require(app["payload"]["submitted_at"] is None, "APPLICATION_ALREADY_SUBMITTED", "do not rewrite an actual submission's document references")
+        container, slot = document_slot(value)
+        if app["payload"].get(container, {}).get(slot) != ref:
+            require(app["payload"]["submitted_at"] is None or container == "correspondence_documents", "APPLICATION_ALREADY_SUBMITTED", "do not rewrite an actual submission's document references")
             self.store.put("application", application_id,
-                {**app["payload"], "documents": {**app["payload"]["documents"], slot: ref}},
+                {**app["payload"], container: {**app["payload"].get(container, {}), slot: ref}},
                 expected=app["revision"], reason="Attach exact prepared or reviewed document without recreating the application")
-        return {**ref, "artifact": value["artifact"], "artifact_sha256": value["artifact_sha256"], "review": value["review"], "purpose": value.get("purpose", "submission"), "slot": slot}
+        return {**ref, "artifact": value["artifact"], "artifact_sha256": value["artifact_sha256"], "review": value["review"], "purpose": value.get("purpose", "submission"), "slot": slot, "container": container}
 
     def review(self, doc_id, revision, decision, feedback):
         require(decision in {"approved", "revise", "rejected", "skipped"} and feedback, "REVIEW_INVALID", "give a decision and the user's feedback")
         record = self.store.get("document", doc_id)
         app = self.store.get("application", record["payload"]["application_id"])
-        require(app["payload"]["submitted_at"] is None, "APPLICATION_ALREADY_SUBMITTED", "preserve the review version used for an actual submission")
         value = record["payload"]
-        slot = value["document_type"] if value.get("purpose", "submission") == "submission" else value["document_type"] + ":review_only:" + value["language"]
-        require(app["payload"]["documents"].get(slot, {}).get("id") == doc_id, "DOCUMENT_NOT_CURRENT", "this document was superseded; select it explicitly before reviewing instead of silently replacing a newer artifact")
+        container, slot = document_slot(value)
+        require(app["payload"]["submitted_at"] is None or container == "correspondence_documents", "APPLICATION_ALREADY_SUBMITTED", "preserve the review version used for an actual submission")
+        require(app["payload"].get(container, {}).get(slot, {}).get("id") == doc_id, "DOCUMENT_NOT_CURRENT", "this document was superseded; select it explicitly before reviewing instead of silently replacing a newer artifact")
         require(record["revision"] == revision, "REVISION_CONFLICT", "review targets a different document revision")
         require(digest(self.paths.permanent(record["payload"]["artifact"])) == record["payload"]["artifact_sha256"], "DOCUMENT_CHANGED", "artifact changed after presentation")
         if decision == "approved":
@@ -230,7 +246,7 @@ class Documents:
             require(record["payload"].get("job_content_hash") == job_content_hash(app["payload"]["job"]),
                     "DOCUMENT_SOURCE_STALE", "job content changed; do not approve an old document against a different JD")
             if value.get("purpose") == "review_only":
-                source = app["payload"]["documents"].get("cover_letter")
+                source = app["payload"].get(container, {}).get("cover_letter")
                 require(source and self.store.get("document", source["id"], source["revision"])["payload"]["artifact_sha256"] == value["translation_of"]["artifact_sha256"],
                         "DOCUMENT_SOURCE_STALE", "the submission letter changed; refresh its review-only companion")
         updated = self.store.put("document", doc_id, {**record["payload"], "review": decision, "feedback": feedback,

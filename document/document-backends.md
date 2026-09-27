@@ -136,6 +136,14 @@ Reviewing a superseded artifact does not silently replace the current selection;
 use an explicit `documents attach` if the user deliberately selects it again.
 Once a submission is reported, its document references remain a historical
 snapshot and cannot be replaced through render/attach/review.
+For a separately requested post-submission update, use `purpose: "correspondence"`
+and a nonempty `request_ref` pointing to the actual user/HR request. This creates
+new artifacts under `correspondence_documents`, preserving the original
+`documents`, JD and submission timestamp. A requested correspondence letter
+does not depend on the old form's letter slot; its review-only translation binds
+that exact correspondence artifact and stays in the same separate container.
+Review is still required, and sending it needs a distinct mail authorization.
+Do not create a duplicate application or fake a second submission for a follow-up.
 Older artifacts without a JD-content binding are reported as unbound by
 readiness. Do not assign them today's job hash without evidence; prepare and
 review a bound version for a still-unsubmitted application. Historical submitted

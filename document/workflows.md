@@ -175,6 +175,11 @@ is local advice, not browser execution or authority to submit.
 After a real submission report, its preparation snapshot cannot be replaced by
 new renders, refreshed JDs or rewritten requirements. Preserve it for outcomes;
 do not regenerate an old application to make its historical warnings disappear.
+If the user or HR requests an updated document later, generate a separately
+bound `correspondence` document with `request_ref`, review it, then prepare a
+separately authorized mail draft. `application show` lists these under
+`correspondence_documents`; they never replace the original submission set or
+consume another application quota. See the document-backend protocol.
 
 ## Manual registration handoff
 

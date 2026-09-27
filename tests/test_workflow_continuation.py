@@ -89,6 +89,42 @@ class ContinuationTests(unittest.TestCase):
             with self.assertRaises(ContractError): flow.requirements(app["id"], {"cover_letter": "required", "page_evidence": "Changed"})
             self.assertTrue(flow.readiness(app["id"])["already_submitted"])
 
+    def test_requested_followup_document_preserves_original_submission(self):
+        with workspace() as paths:
+            flow, job, mapping, app, docs, _ = self.ready_resume(paths)
+            flow.report_submitted(app["id"], "Synthetic actual user report")
+            before = flow.store.get("application", app["id"])["payload"]
+            followup = content(flow, app)
+            followup["purpose"] = "correspondence"
+            with self.assertRaises(ContractError): docs.render(app["id"], "text-example", followup)
+            followup["request_ref"] = "synthetic-user-confirmed-hr-request"
+            result = docs.render(app["id"], "text-example", followup)
+            self.assertEqual(result["container"], "correspondence_documents")
+            self.assertEqual(status(paths)["pending_document_reviews"][0]["slot"], "correspondence:resume")
+            docs.review(result["id"], result["revision"], "approved", "Synthetic user accepted follow-up PDF")
+            after = flow.store.get("application", app["id"])["payload"]
+            self.assertEqual(after["documents"], before["documents"])
+            self.assertEqual(after["submitted_at"], before["submitted_at"])
+            self.assertEqual(after["job"], before["job"])
+            self.assertEqual(len(flow.store.list("application")), 1)
+
+    def test_requested_followup_letter_and_review_copy_use_separate_slots(self):
+        with workspace() as paths:
+            flow, job, mapping, app, docs, _ = self.ready_resume(paths)
+            flow.requirements(app["id"], {"cover_letter": "not_supported", "page_evidence": "Synthetic original resume-only form"})
+            flow.report_submitted(app["id"], "Synthetic actual user report")
+            letter = content(flow, app, "cover_letter")
+            letter.update(purpose="correspondence", request_ref="synthetic-new-hr-letter-request")
+            result = docs.render(app["id"], "text-example", letter)
+            reviewed = docs.review(result["id"], result["revision"], "approved", "Synthetic follow-up approved")
+            companion = content(flow, app, "cover_letter")
+            companion.update(purpose="review_only", translation_of={"id": reviewed["id"], "revision": reviewed["revision"]})
+            copy = docs.render(app["id"], "text-example", companion)
+            docs.review(copy["id"], copy["revision"], "approved", "Synthetic review translation accepted")
+            saved = flow.store.get("application", app["id"])["payload"]
+            self.assertNotIn("cover_letter", saved["documents"])
+            self.assertEqual(saved["correspondence_documents"]["cover_letter"]["id"], result["id"])
+
     def test_missing_letters_stale_facts_and_modified_files_are_not_ready(self):
         with workspace() as paths:
             flow, job, mapping, app, docs, approved = self.ready_resume(paths)

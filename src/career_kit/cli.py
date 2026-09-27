@@ -163,7 +163,8 @@ def execute(paths, args):
         if args.action == "report-submitted":
             return flow.report_submitted(args.id, args.reason)
         record = flow.store.get("application", args.id)
-        return {"id": args.id, "revision": record["revision"], **{k: record["payload"][k] for k in ("status", "documents", "submitted_at")}, "requirements_known": record["payload"]["requirements"] is not None}
+        return {"id": args.id, "revision": record["revision"], **{k: record["payload"][k] for k in ("status", "documents", "submitted_at")},
+                "correspondence_documents": record["payload"].get("correspondence_documents", {}), "requirements_known": record["payload"]["requirements"] is not None}
     if args.command == "documents":
         documents = Documents(paths)
         if args.action == "register": return documents.register(args.profile)

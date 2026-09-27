@@ -26,7 +26,8 @@ def status(paths):
     documents = {r["id"]: r for r in store.list("document")}
     reviews = []
     for app in apps:
-        for slot, ref in app["payload"].get("documents", {}).items():
+        refs = list(app["payload"].get("documents", {}).items()) + [("correspondence:" + slot, ref) for slot, ref in app["payload"].get("correspondence_documents", {}).items()]
+        for slot, ref in refs:
             record = documents.get(ref["id"])
             if record and record["payload"].get("review") in {"pending", "revise"}:
                 reviews.append({"application_id": app["id"], "slot": slot, "id": record["id"], "revision": record["revision"], "status": record["payload"]["review"]})
