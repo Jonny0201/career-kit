@@ -1,3 +1,20 @@
+# Never publish local users, private templates, credentials or generated artifacts.
+/data/
+/local/
+/credentials/
+/runtime.nosync/
+/tmp/
+.DS_Store
+*.ai
+*.pdf
+*.docx
+*.tex
+*.sqlite*
+*.pem
+*.key
+*cookies*.json
+*token*.json
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[codz]

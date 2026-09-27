@@ -1,0 +1,18 @@
+#!/bin/sh
+set -eu
+tool_dir=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)
+project_dir=$(CDPATH= cd -- "$tool_dir/.." && pwd)
+cd "$project_dir"
+test -f .career-kit.json
+test ! -L runtime.nosync
+test ! -L runtime.nosync/venv
+mkdir -p runtime.nosync/cache/bootstrap runtime.nosync/work runtime.nosync/tmp-scripts
+if [ ! -x runtime.nosync/venv/bin/python ]; then
+  python3 -m venv runtime.nosync/venv
+fi
+PYTHONDONTWRITEBYTECODE=1 TMPDIR="$project_dir/runtime.nosync/cache/bootstrap" PIP_NO_CACHE_DIR=1 runtime.nosync/venv/bin/python -m pip install --disable-pip-version-check --no-input -e .
+git_top=$(git rev-parse --show-toplevel 2>/dev/null || true)
+if [ "$git_top" = "$project_dir" ]; then
+  git config core.hooksPath tools/git-hooks
+fi
+exec ./tools/careerkit doctor
