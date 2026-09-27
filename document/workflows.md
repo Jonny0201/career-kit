@@ -6,6 +6,15 @@ under `local/inputs/`, `data/drafts/` or `runtime.nosync/work/`; never credentia
 IDs and revisions below are placeholders; use actual CLI results. JSON input is
 data, not shell code. Never put passwords or private text into command arguments.
 
+## Start or resume
+
+`init` creates missing blank private inputs without overwriting anything.
+`status` returns IDs, revisions, missing setup and current pending work; use it
+instead of guessing file names or asking the user to reconstruct prior steps.
+Its suggestions are advisory, not a new authorization gate. `doctor` checks the
+base environment; `verify` checks local record integrity. A user who defers
+company discovery is not asked to supply someone else's sample list.
+
 ## Candidate data
 
 ```sh
@@ -32,6 +41,23 @@ do not route identity, unapproved narrative or credentials into a model.
 
 ## Company and job
 
+For the full preference interview and both with-list/without-list paths, read
+[company onboarding](company-onboarding.md). Batch CLI connections are:
+
+```sh
+./tools/careerkit company seeds-import --file local/inputs/company-seeds.json
+./tools/careerkit company seeds-show <seed-batch-id>
+./tools/careerkit company propose-batch --file local/inputs/researched-companies.json
+./tools/careerkit export-local company_batch <batch-id> --output local/review/company-batch.json
+./tools/careerkit company review-batch <batch-id> --revision <presented-revision> --decision approved
+```
+
+Import supports JSON/CSV/text. Normalize spreadsheets locally first. No company
+is approved by import or by finding a public URL. Blacklisted canonical names,
+aliases and original seed labels are excluded from proposals; preexisting
+registry decisions are not overwritten. A partially reviewed batch resumes
+with the original presented revision and same decision from `status`.
+
 Company input needs `name`, HTTPS `official_url` and `evidence`. Optional
 `verified_careers_hosts` contains verified hostnames, not arbitrary URLs. For
 culture prose, evidence must be a list of `{id, url, excerpt}` from official
@@ -44,7 +70,9 @@ sources. Research does not prove candidate facts or grant registry admission.
 ./tools/careerkit company enrich <id> --revision <revision> --file local/inputs/official-evidence.json
 ```
 
-Enrichment accepts `verified_careers_hosts` and `evidence`, with evidence required.
+Enrichment accepts `verified_careers_hosts`, `aliases` and `evidence`, with evidence required.
+Verified aliases are added without removing prior aliases; the same URL under
+different names requires explicit identity resolution, not a silent merge.
 It cannot change admission or identity. Company IDs use the supplied official
 URL; the agent must resolve aliases/parent groups before proposing duplicates.
 This initial core does not automate corporate ownership research or group merging.
@@ -68,8 +96,9 @@ Normalize a current official job into a private temporary object:
 
 Each responsibility, required qualification and preferred qualification needs a
 distinct ID. `hard` is a genuine non-negotiable condition, not every keyword.
-Use the exact canonical JSON SHA-256 (`canonical_sha256` in the package) as
-`job_hash` in the mapping; pretty-printing bytes is not that hash.
+Use `hash-input --file runtime.nosync/work/job.json` to obtain the exact canonical
+JSON SHA-256 as `job_hash` in the mapping; pretty-printing bytes is not that hash.
+The command returns only the hash, not the input values.
 
 ```json
 {
@@ -124,6 +153,28 @@ is not browser automation. After an actual user submission report:
 It is idempotent and preserves discrepancies if local preparation was incomplete;
 it does not fabricate missing approvals. Never call it to pass a test or because
 the browser reached the final page.
+
+Before the user submits, check the actual upload set:
+
+```sh
+./tools/careerkit application readiness <id>
+./tools/careerkit application refresh <id> --job runtime.nosync/work/current-job.json --mapping runtime.nosync/work/current-mapping.json
+./tools/careerkit application readiness <id>
+```
+
+Refresh only when needed, after observing the real official page and reevaluating
+its current facts. It preserves the same company/requisition and application ID.
+A changed observation timestamp alone keeps unchanged document approvals; a
+changed JD body or candidate source is reported as stale. Readiness checks job
+freshness, company admission/exclusions, the user's optional quota, exact file
+bytes and current document reviews. A missing optional letter is fine; an optional
+letter selected for upload still needs review. `submission_documents` excludes
+review-only companions and letters unsupported by the observed form. The result
+is local advice, not browser execution or authority to submit.
+
+After a real submission report, its preparation snapshot cannot be replaced by
+new renders, refreshed JDs or rewritten requirements. Preserve it for outcomes;
+do not regenerate an old application to make its historical warnings disappear.
 
 ## Manual registration handoff
 

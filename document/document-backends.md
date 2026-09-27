@@ -92,6 +92,16 @@ For cover letters, `kind: "company"` claims require
 facts. `kind: "interest"` and `kind: "closing"` are explicitly non-factual
 letter statements; do not hide career or culture assertions there.
 
+An optional review translation is a separate artifact, not the upload letter.
+Set `purpose: "review_only"` and
+`translation_of: {"id": "<submission-letter-id>", "revision": "<exact-revision>"}`
+in its content input. Use a profile that supports the translation language.
+It is attached under `cover_letter:review_only:<language>`; the normal
+`cover_letter` reference stays unchanged. The translation binds the source
+artifact hash; if the submission letter changes, refresh the companion. Human
+review checks meaning/parity; reference equality is not proof of translation
+quality. Normal documents default to `purpose: "submission"`.
+
 ## Register, verify, publish and review
 
 ```sh
@@ -121,6 +131,15 @@ not change old bytes. If the artifact was saved but attaching it was interrupted
 `documents attach <application-id> <document-id>` recovers without rerendering.
 Do not recreate the application. Changed candidate sources invalidate approval
 of stale content; refresh affected documents rather than relabeling them.
+Documents also bind the JD content, separately from its observation timestamp.
+Reviewing a superseded artifact does not silently replace the current selection;
+use an explicit `documents attach` if the user deliberately selects it again.
+Once a submission is reported, its document references remain a historical
+snapshot and cannot be replaced through render/attach/review.
+Older artifacts without a JD-content binding are reported as unbound by
+readiness. Do not assign them today's job hash without evidence; prepare and
+review a bound version for a still-unsubmitted application. Historical submitted
+artifacts remain preserved and are not rewritten during an upgrade.
 
 ## Test before real use
 

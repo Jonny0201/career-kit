@@ -13,6 +13,8 @@ separate, explicit authorization for the exact message.
 ## What is included
 
 - Blank onboarding inputs and a detailed, project-specific interview guide.
+- User-owned company-list import (JSON/CSV/text), preference-led discovery,
+  blacklist-aware batch proposals and resumable group review; no starter registry.
 - Confirmed facts, source references and per-purpose disclosure controls.
 - Company admission, official-source job intake and evidence-bound matching.
 - Duplicate-safe application records and optional user-defined company quotas.
@@ -52,6 +54,12 @@ For an agent, start with [AGENTS.md](AGENTS.md) and the repository's
 [Career Kit skill](.agents/skills/career-kit/SKILL.md). The guide tells the agent
 what to ask, what to save and how to reach the first real application without
 having to reverse-engineer the source.
+
+For company setup, read [preferences and initial lists](document/company-onboarding.md).
+For continuation, run `./tools/careerkit status`; it lists existing work and
+next-step hints without resetting the workspace or exposing contact details.
+Before the user submits, `application readiness <id>` checks current evidence,
+documents and their reviews. It is not authorization or an automated Submit.
 
 ## Your workspace stays yours
 

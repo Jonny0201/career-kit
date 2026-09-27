@@ -13,8 +13,9 @@ do not call empty inputs confirmed or overwrite previous history. Never inherit
 parent-directory settings, a contributor's preferences or test identities.
 
 Run the README bootstrap commands. Python dependencies live in this checkout's
-`runtime.nosync/venv`. `init` creates four blank JSON objects under
-`local/inputs/`: profile, facts, history and preferences. User files are ignored
+`runtime.nosync/venv`. `init` creates five blank JSON inputs under
+`local/inputs/`: profile, facts, history, preferences and company-seeds. Only the
+first four are candidate sections; the seed list uses the company intake below. User files are ignored
 by Git. Back them up privately; a public source clone cannot restore them.
 
 ## 2. Complete private identity and career basics
@@ -147,6 +148,13 @@ working conditions, exclusions and prioritization. Ask what is a hard limit,
 what is unknown and what may be discussed. Do not impose any contributor's
 company grading, geographic definition, blacklist or quota.
 
+Explicitly ask whether the user has an initial company list. Accept their
+spreadsheet, CSV, text, pasted names or URLs; ask about source age and recruiter
+rows. If they have no list, ask whether to discover firms from their confirmed
+preferences. Do not supply a contributor's list, require a list to proceed with
+authorized discovery, or repeatedly ask after a deferral. An existing registry
+or direct JD does not require restarting company onboarding.
+
 Store this in `preferences.json`; empty arrays are unknown/unset, not universal
 consent. `quota` may be null or `{"maximum": 2, "window_days": 90}` if that
 fictional rule is explicitly chosen by the user. The tool counts actual
@@ -157,6 +165,10 @@ A supplied company list is a lead, not proof of current identity or a job.
 Clean duplicates and recruitment-agency ambiguity, verify official sources,
 propose admissions and record the user's decision. Batch authorization is
 possible only when its scope is explicit; never fabricate individual approvals.
+Follow [company onboarding](company-onboarding.md) for the exact preference
+fields, private list formats, duplicate handling, official research, batch
+proposal/review and interruption recovery. Raw lists and confirmed registries
+are separate: `company seeds-import` saves leads, not approved companies.
 
 ## 5. Configure the user's document generator
 
@@ -209,6 +221,15 @@ local and never upload it accidentally.
 The user submits. After their actual report, call `application report-submitted`
 once. Preparing a PDF, finishing a preview or clicking Next is not a submission.
 Keep final documents and exact evidence; temporary discovery work can be removed.
+Before presenting the final upload set, call `application readiness`. If the
+official job observation is stale, refresh its evidence/mapping with
+`application refresh` on the same application. A timestamp-only refresh preserves
+unchanged document approvals. Changed job content or candidate facts requires
+affected documents to be refreshed; do not just reapprove an old artifact.
+Use `purpose: "review_only"` and `translation_of` for a companion letter so it
+cannot replace the submission-language attachment. Submitted preparation
+snapshots remain frozen; the reporting command records actual events even when
+it must preserve warnings about missing local preparation.
 
 ## 8. Optional email and subsequent outcomes
 
@@ -226,3 +247,12 @@ No scheduler or background watcher is installed.
 Record rejection/interview/offer observations with sources. Analyze gaps and
 possible experiments separately from facts; a low-information outcome can
 legitimately yield no specific conclusion. Resume from local records next time.
+
+## 9. Continue without rereading the whole codebase
+
+Run `tools/careerkit status` after a fresh session or interruption. It returns
+existing candidate section revisions, seed/batch IDs, application IDs, current
+pending reviews and uncertain mail effects, plus suggested next actions. It does
+not show contact fields, seed notes, mail bodies or secrets, and does not grant
+authorization. `verify` still checks integrity. Mail setup is optional for job
+search; document tools are required only when generating the selected format.

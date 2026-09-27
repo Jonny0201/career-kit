@@ -17,7 +17,7 @@ class CommandTests(unittest.TestCase):
             with patch("career_kit.cli.ProjectPaths.discover", return_value=paths), contextlib.redirect_stdout(out):
                 self.assertEqual(main(["init"]), 0)
             result = json.loads(out.getvalue())
-            self.assertEqual(len(result["result"]["created_blank_inputs"]), 4)
+            self.assertEqual(len(result["result"]["created_blank_inputs"]), 5)
             out = io.StringIO()
             with patch("career_kit.cli.ProjectPaths.discover", return_value=paths), contextlib.redirect_stdout(out):
                 self.assertEqual(main(["candidate", "import", "profile", "--file", "credentials/mail.json"]), 1)

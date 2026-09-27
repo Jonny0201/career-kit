@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "career-kit"
-version = "0.1.0"
+version = "0.2.0"
 description = "An on-demand, evidence-based job-search workspace for people and agents"
 requires-python = ">=3.11"
 dependencies = ["pypdf==6.10.0"]

@@ -9,12 +9,17 @@ Read `AGENTS.md` from the same root. Never resolve missing files against an
 ancestor workspace or import another user's setup. This skill is an operational
 router, not authorization to send email, create accounts or submit applications.
 
-1. Run `tools/bootstrap` and `tools/careerkit doctor`; inspect actual local
+1. Run `tools/bootstrap`, `tools/careerkit doctor` and `tools/careerkit status`; inspect actual local
    state and verify its integrity. Do not repeat onboarding for an existing user.
 2. For initial setup and project interviews, read
    `document/getting-started.md`. Ask detailed questions based on the actual
    project, group one topic's questions, retain stable source/question IDs and
    distinguish confirmed, unknown, corrected and non-disclosable answers.
+   For company setup also read `document/company-onboarding.md`: ask for the
+   user's own preferences and initial list; import private seeds, research and
+   propose an exact batch. No list means ask whether discovery is wanted, not
+   inherit sample companies. Resume existing batches instead of restarting
+   onboarding or asking for the same list again.
 3. For job, review, application, mail or outcome work, read
    `document/workflows.md` and use the tracked CLI. Semantic decisions remain
    with the main conversational agent; exact revisions and I/O remain with code.

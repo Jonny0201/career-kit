@@ -13,7 +13,8 @@ from .errors import ContractError
 
 KINDS = {"candidate_profile", "candidate_facts", "candidate_history", "preferences",
          "company", "job", "application", "document_profile", "document", "review",
-         "mail_draft", "mail_message", "effect", "outcome", "account"}
+         "mail_draft", "mail_message", "effect", "outcome", "account",
+         "company_seeds", "company_batch"}
 
 
 def utc_now():

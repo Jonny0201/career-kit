@@ -20,7 +20,7 @@ class CoreTests(unittest.TestCase):
             self.assertEqual(result["document_setup"], "not_configured")
             self.assertFalse(paths.permanent("data").exists())
             first = initialize(paths)
-            self.assertEqual(len(first["created_blank_inputs"]), 4)
+            self.assertEqual(len(first["created_blank_inputs"]), 5)
             self.assertEqual(initialize(paths)["created_blank_inputs"], [])
             self.assertFalse(paths.permanent("data").exists())
 

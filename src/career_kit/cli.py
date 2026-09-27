@@ -44,7 +44,10 @@ def initialize(paths):
         "history": {"employment": [], "education": [], "projects": [], "publications": []},
         "preferences": {"roles": [], "seniority": [], "locations": [], "work_modes": [],
                         "company_blacklist": [], "compensation": None, "working_conditions": [],
-                        "document_preferences": {}, "quota": None},
+                        "document_preferences": {}, "quota": None,
+                        "company_search": {"initial_list_status": "not_asked", "allow_discovery": None,
+                                           "ownership_preferences": None, "industries": None, "sizes": None, "priority": []}},
+        "company-seeds": {"source": "", "companies": []},
     }
     created = []
     for name, value in templates.items():
@@ -59,7 +62,8 @@ def initialize(paths):
 def parser():
     root = argparse.ArgumentParser(prog="careerkit")
     commands = root.add_subparsers(dest="command", required=True)
-    commands.add_parser("doctor"); commands.add_parser("init"); commands.add_parser("verify")
+    commands.add_parser("doctor"); commands.add_parser("init"); commands.add_parser("verify"); commands.add_parser("status")
+    hash_input = commands.add_parser("hash-input"); hash_input.add_argument("--file", required=True)
     candidate = commands.add_parser("candidate").add_subparsers(dest="action", required=True)
     imp = candidate.add_parser("import"); imp.add_argument("section", choices=("profile", "facts", "history", "preferences")); imp.add_argument("--file", required=True); imp.add_argument("--expected")
     approve = candidate.add_parser("approve"); approve.add_argument("section"); approve.add_argument("--revision", required=True)
@@ -69,12 +73,18 @@ def parser():
     review = company.add_parser("review"); review.add_argument("id"); review.add_argument("--revision", required=True); review.add_argument("--decision", required=True, choices=("approved", "rejected", "watchlist"))
     company.add_parser("list")
     enrich = company.add_parser("enrich"); enrich.add_argument("id"); enrich.add_argument("--revision", required=True); enrich.add_argument("--file", required=True)
+    seeds = company.add_parser("seeds-import"); seeds.add_argument("--file", required=True)
+    seeds_show = company.add_parser("seeds-show"); seeds_show.add_argument("id")
+    batch = company.add_parser("propose-batch"); batch.add_argument("--file", required=True)
+    batch_review = company.add_parser("review-batch"); batch_review.add_argument("id"); batch_review.add_argument("--revision", required=True); batch_review.add_argument("--decision", required=True, choices=("approved", "rejected", "watchlist"))
     job = commands.add_parser("job").add_subparsers(dest="action", required=True)
     evaluate = job.add_parser("evaluate"); evaluate.add_argument("--job", required=True); evaluate.add_argument("--mapping", required=True)
     ats = commands.add_parser("ats-parse"); ats.add_argument("adapter", choices=("greenhouse", "lever", "ashby", "smartrecruiters", "workday", "generic")); ats.add_argument("--file", required=True); ats.add_argument("--source-url", required=True)
     application = commands.add_parser("application").add_subparsers(dest="action", required=True)
     create = application.add_parser("create"); create.add_argument("--job", required=True); create.add_argument("--mapping", required=True); create.add_argument("--reason", required=True)
     show = application.add_parser("show"); show.add_argument("id")
+    ready = application.add_parser("readiness"); ready.add_argument("id")
+    refresh = application.add_parser("refresh"); refresh.add_argument("id"); refresh.add_argument("--job", required=True); refresh.add_argument("--mapping", required=True)
     requirements = application.add_parser("requirements"); requirements.add_argument("id"); requirements.add_argument("--file", required=True)
     submit = application.add_parser("report-submitted"); submit.add_argument("id"); submit.add_argument("--reason", required=True)
     docs = commands.add_parser("documents").add_subparsers(dest="action", required=True)
@@ -107,6 +117,12 @@ def execute(paths, args):
         return initialize(paths)
     if args.command == "verify":
         return flow.store.verify()
+    if args.command == "status":
+        from .status import status
+        return status(paths)
+    if args.command == "hash-input":
+        from .canonical_json import canonical_sha256
+        return {"sha256": canonical_sha256(read_input(paths, args.file)), "encoding": "canonical-json", "values_included": False}
     if args.command == "candidate":
         if args.action == "import":
             return flow.candidate_import(args.section, read_input(paths, args.file), expected=args.expected)
@@ -114,6 +130,13 @@ def execute(paths, args):
             return flow.candidate_approve(args.section, args.revision)
         return flow.bundle(args.purpose)
     if args.command == "company":
+        if args.action in {"seeds-import", "seeds-show", "propose-batch", "review-batch"}:
+            from .companies import CompanyIntake, read_seeds
+            intake = CompanyIntake(paths)
+            if args.action == "seeds-import": return intake.import_seeds(read_seeds(paths, args.file))
+            if args.action == "seeds-show": return intake.show_seeds(args.id)
+            if args.action == "propose-batch": return intake.propose_batch(read_input(paths, args.file))
+            return intake.review_batch(args.id, args.revision, args.decision)
         if args.action == "propose":
             return flow.company_propose(read_input(paths, args.file))
         if args.action == "review":
@@ -131,6 +154,8 @@ def execute(paths, args):
         jobs, warnings, complete = ATSParser().parse(args.adapter, source.read_bytes(), args.source_url)
         return {"jobs": jobs, "warnings": warnings, "complete": complete, "source_verified_by_parser": False}
     if args.command == "application":
+        if args.action == "readiness": return flow.readiness(args.id)
+        if args.action == "refresh": return flow.application_refresh(args.id, read_input(paths, args.job), read_input(paths, args.mapping))
         if args.action == "create":
             return flow.application_create(read_input(paths, args.job), read_input(paths, args.mapping), args.reason)
         if args.action == "requirements":

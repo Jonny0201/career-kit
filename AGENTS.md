@@ -21,7 +21,8 @@ salary, blacklist, seniority, template or submission authorization is a default.
 2. Run `./tools/bootstrap`, then `./tools/careerkit doctor`. Only missing selected
    backend dependencies should require new document software. Never demand a
    tool merely because a different user once used it.
-3. Use `./tools/careerkit verify` before mutation. Inspect actual pending effects
+3. Use `./tools/careerkit verify` before mutation and `./tools/careerkit status`
+   to find existing work, missing setup and the next relevant command. Inspect actual pending effects
    and locks. Never replay an uncertain Send or report a prepared application as
    submitted. Local locks are not distributed locks; one writer at a time.
 4. Read [workflows](document/workflows.md). Continue within the user's actual
@@ -34,6 +35,14 @@ salary, blacklist, seniority, template or submission authorization is a default.
   history and facts, user preferences, company admission, private document
   backend. User confirmation binds exact source revisions. Never confirm data
   on the user's behalf or use test fixtures as their experience.
+- **Company setup:** explicitly ask for this user's preferences and initial
+  company list, following [company onboarding](document/company-onboarding.md).
+  Accept names/URLs/CSV or normalize their spreadsheet locally. Import seeds as
+  unverified leads, clean ambiguous employers/recruiters and exclusions, research
+  official evidence, then propose/review an exact batch. Without a list ask
+  whether preference-based discovery is wanted; respect deferral and never
+  supply another user's list. Existing registries and direct JDs need no forced
+  onboarding restart. Resume partial batch reviews with their original revision.
 - **Find jobs / given a JD:** verify current official evidence and company;
   compare actual work, system scope, ownership, confirmed evidence and gaps.
   Do not merely match language keywords. The main agent selects an eligible
@@ -46,6 +55,8 @@ salary, blacklist, seniority, template or submission authorization is a default.
   item, layout or page limit. User preferences and JD needs decide those.
   Reference facts, use only an exact approved local backend, verify text and
   inspect the actual pages. Present the final PDF/text, JD and selection reasons.
+  Review-only companion letters use a separate purpose/slot and bind the exact
+  submission letter; never replace the upload artifact with a translation.
 - **Cover letter:** establish the actual form's attachment/text requirements
   first. Do not pre-generate one for every JD or occupy the only resume slot.
   Verify culture claims on official company/careers pages. The user's preferred
@@ -54,6 +65,11 @@ salary, blacklist, seniority, template or submission authorization is a default.
   inspect the page and advise for all applicable fields, including hidden
   add-another experience/education controls. A resume attachment is no reason
   to omit known form information. Never invent missing social profiles.
+  Use `application refresh` for the same job's current evidence and
+  `application readiness` before presenting the final upload set. A timestamp-only
+  refresh keeps unchanged document approvals; changed JD content/facts require
+  affected work to be reviewed. Actual submitted preparation snapshots are not
+  overwritten. Readiness does not press or authorize Submit.
 - **Mail:** request-scoped read, associate known applications, classify and
   draft. Confirm exact recipients/body/attachments locally with the user. Only
   a separate current authorization permits one Send. A document approval does
