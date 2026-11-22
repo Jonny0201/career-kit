@@ -120,12 +120,21 @@ class Store:
             return {"kind": kind, "id": identifier, "revision": digest}
 
     def verify(self):
+        integrity, _ = self.verified_snapshot(())
+        return integrity
+
+    def verified_snapshot(self, kinds):
+        """Verify all revisions and retain the latest records of the requested kinds."""
         events = self.events()
         committed = set()
+        latest = {kind: {} for kind in kinds}
         for event in events:
-            self._read(event)
+            record = self._read(event)
+            if record["kind"] in latest:
+                latest[record["kind"]][record["id"]] = record
             committed.add(self._record_path(event["kind"], event["id"], event["revision"]))
         root = self.paths.permanent("data/records")
         orphans = [p.relative_to(self.paths.root).as_posix() for p in root.glob("*/*/*.json") if p not in committed] if root.exists() else []
-        return {"ok": not orphans, "event_count": len(events), "orphan_records": orphans,
-                "journal_head": events[-1]["hash"] if events else None}
+        integrity = {"ok": not orphans, "event_count": len(events), "orphan_records": orphans,
+                     "journal_head": events[-1]["hash"] if events else None}
+        return integrity, latest

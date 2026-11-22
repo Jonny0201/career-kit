@@ -2,12 +2,14 @@ import copy
 import json
 from pathlib import Path
 import unittest
+from unittest.mock import patch
 
 from career_kit.cli import initialize, doctor
 from career_kit.documents import Documents
 from career_kit.errors import ContractError
 from career_kit.paths import ProjectPaths, discover_project_root
 from career_kit.store import Store
+from career_kit.status import status
 from career_kit.canonical_json import canonical_sha256
 from helpers import workspace, setup, profile, content
 
@@ -51,7 +53,21 @@ class CoreTests(unittest.TestCase):
             with self.assertRaises(OSError): store.put("preferences", "preferences", {}, reason="Synthetic", failpoint=crash)
             with self.assertRaises(ContractError): store.get("preferences", "preferences")
             self.assertFalse(store.verify()["ok"])
+            self.assertIn("inspect_local_integrity_orphans", status(paths)["next_actions"])
             self.assertFalse(paths.runtime_path("locks/writer.lock").exists())
+
+    def test_status_verifies_history_once_and_detects_changed_old_revisions(self):
+        with workspace() as paths:
+            store = Store(paths)
+            first = store.put("preferences", "preferences", {"status": "draft"}, reason="Initial draft")
+            store.put("preferences", "preferences", {"status": "confirmed"},
+                      expected=first["revision"], reason="Confirm preferences")
+            with patch.object(Store, "events", autospec=True, side_effect=Store.events) as read:
+                self.assertEqual(status(paths)["candidate_sections"]["preferences"]["status"], "confirmed")
+                read.assert_called_once()
+            paths.permanent(f"data/records/preferences/preferences/{first['revision']}.json").write_text("{}")
+            with self.assertRaisesRegex(ContractError, "RECORD_INVALID"):
+                status(paths)
 
     def test_matching_requires_bound_confirmed_facts_and_real_role_coverage(self):
         with workspace() as paths:

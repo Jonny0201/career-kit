@@ -12,7 +12,9 @@ data, not shell code. Never put passwords or private text into command arguments
 `status` returns IDs, revisions, missing setup and current pending work; use it
 instead of guessing file names or asking the user to reconstruct prior steps.
 Its suggestions are advisory, not a new authorization gate. `doctor` checks the
-base environment; `verify` checks local record integrity. A user who defers
+base environment. Both `doctor` and `status` verify the journal and all committed
+revisions once per invocation and report from that same read. `verify` returns
+the integrity report on its own. A user who defers
 company discovery is not asked to supply someone else's sample list.
 
 ## Candidate data

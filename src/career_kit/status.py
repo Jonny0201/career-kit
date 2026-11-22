@@ -3,27 +3,29 @@ from .store import Store
 
 
 def status(paths):
-    store = Store(paths)
-    integrity = store.verify()
+    section_kinds = {"profile": "candidate_profile", "history": "candidate_history",
+                     "facts": "candidate_facts", "preferences": "preferences"}
+    integrity, latest = Store(paths).verified_snapshot((
+        *section_kinds.values(), "company", "company_seeds", "company_batch",
+        "application", "effect", "document_profile", "document",
+    ))
     sections = {}
-    for section, kind in (("profile", "candidate_profile"), ("history", "candidate_history"),
-                          ("facts", "candidate_facts"), ("preferences", "preferences")):
-        rows = store.list(kind)
-        record = next((r for r in rows if r["id"] == section), None)
+    for section, kind in section_kinds.items():
+        record = latest[kind].get(section)
         sections[section] = {"status": record["payload"].get("status") if record else "missing",
                              "revision": record["revision"] if record else None}
         if section == "preferences": preferences = record["payload"] if record else {}
         if section == "facts": fact_count = len(record["payload"].get("facts", [])) if record else 0
-    companies = store.list("company")
-    seeds = store.list("company_seeds")
-    batches = store.list("company_batch")
+    companies = latest["company"].values()
+    seeds = latest["company_seeds"].values()
+    batches = latest["company_batch"].values()
     grouped = {item["id"] for batch in batches if batch["payload"]["status"] in {"proposed", "reviewing"}
                for item in batch["payload"]["items"] if item.get("reviewable")}
     individual_reviews = [r for r in companies if r["payload"]["status"] == "proposed" and r["id"] not in grouped]
-    apps = store.list("application")
-    effects = [r for r in store.list("effect") if r["payload"].get("status") in {"claimed", "uncertain", "unknown"}]
-    profiles = store.list("document_profile")
-    documents = {r["id"]: r for r in store.list("document")}
+    apps = latest["application"].values()
+    effects = [r for r in latest["effect"].values() if r["payload"].get("status") in {"claimed", "uncertain", "unknown"}]
+    profiles = latest["document_profile"].values()
+    documents = latest["document"]
     reviews = []
     for app in apps:
         refs = list(app["payload"].get("documents", {}).items()) + [("correspondence:" + slot, ref) for slot, ref in app["payload"].get("correspondence_documents", {}).items()]

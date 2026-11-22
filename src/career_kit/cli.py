@@ -27,8 +27,8 @@ def read_input(paths, relative):
 
 
 def doctor(paths):
-    integrity = Store(paths).verify()
-    profiles = [{"id": p["id"], "status": p["payload"].get("status")} for p in Store(paths).list("document_profile")]
+    integrity, latest = Store(paths).verified_snapshot(("document_profile",))
+    profiles = [{"id": p["id"], "status": p["payload"].get("status")} for p in latest["document_profile"].values()]
     return {"ok": integrity["ok"] and sys.version_info >= (3, 11) and importlib.util.find_spec("pypdf") is not None, "python_supported": sys.version_info >= (3, 11),
             "integrity": integrity, "document_profiles": profiles,
             "document_setup": "configured" if any(p["status"] == "approved" for p in profiles) else "not_configured",
