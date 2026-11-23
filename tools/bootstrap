@@ -10,9 +10,34 @@ mkdir -p runtime.nosync/cache/bootstrap runtime.nosync/work runtime.nosync/tmp-s
 if [ ! -x runtime.nosync/venv/bin/python ]; then
   python3 -m venv runtime.nosync/venv
 fi
-PYTHONDONTWRITEBYTECODE=1 TMPDIR="$project_dir/runtime.nosync/cache/bootstrap" PIP_NO_CACHE_DIR=1 runtime.nosync/venv/bin/python -m pip install --disable-pip-version-check --no-input -e .
+if ! PYTHONDONTWRITEBYTECODE=1 runtime.nosync/venv/bin/python - <<'CHECK'
+import sys
+from importlib.metadata import distribution, version
+from pathlib import Path
+
+try:
+    import tomllib
+    import career_kit
+    import pypdf
+    project = tomllib.loads(Path("pyproject.toml").read_text())["project"]
+    package = distribution("career-kit")
+    ready = (
+        sys.version_info >= (3, 11)
+        and Path(career_kit.__file__).resolve().parent == Path("src/career_kit").resolve()
+        and package.version == project["version"]
+        and sorted(package.requires or []) == sorted(project["dependencies"])
+        and all(version(name) == required for name, required in
+                (pin.split("==", 1) for pin in project["dependencies"]))
+    )
+except (ImportError, OSError, ValueError):
+    ready = False
+sys.exit(0 if ready else 1)
+CHECK
+then
+    PYTHONDONTWRITEBYTECODE=1 TMPDIR="$project_dir/runtime.nosync/cache/bootstrap" PIP_NO_CACHE_DIR=1 runtime.nosync/venv/bin/python -m pip install --disable-pip-version-check --no-input -e .
+fi
 git_top=$(git rev-parse --show-toplevel 2>/dev/null || true)
-if [ "$git_top" = "$project_dir" ]; then
+if [ "$git_top" = "$project_dir" ] && [ "$(git config --get core.hooksPath || true)" != "tools/git-hooks" ]; then
   git config core.hooksPath tools/git-hooks
 fi
-exec ./tools/careerkit doctor
+echo '{"ok":true,"command":"bootstrap"}'

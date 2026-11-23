@@ -11,10 +11,9 @@ data, not shell code. Never put passwords or private text into command arguments
 `init` creates missing blank private inputs without overwriting anything.
 `status` returns IDs, revisions, missing setup and current pending work; use it
 instead of guessing file names or asking the user to reconstruct prior steps.
-Its suggestions are advisory, not a new authorization gate. `doctor` checks the
-base environment. Both `doctor` and `status` verify the journal and all committed
-revisions once per invocation and report from that same read. `verify` returns
-the integrity report on its own. A user who defers
+Its suggestions are advisory, not a new authorization gate. A ready bootstrap reuses the local installation offline.
+`status` verifies the journal and committed revisions in one read. `verify`
+returns the integrity report on its own. Rendering checks the selected backend. A user who defers
 company discovery is not asked to supply someone else's sample list.
 
 ## Candidate data

@@ -9,7 +9,7 @@ Read `AGENTS.md` from the same root. Never resolve missing files against an
 ancestor workspace or import another user's setup. This skill is an operational
 router, not authorization to send email, create accounts or submit applications.
 
-1. Run `tools/bootstrap`, `tools/careerkit doctor` and `tools/careerkit status`; inspect actual local
+1. Run `tools/bootstrap` and `tools/careerkit status`; inspect actual local
    state and verify its integrity. Do not repeat onboarding for an existing user.
 2. For initial setup and project interviews, read
    `document/getting-started.md`. Ask detailed questions based on the actual

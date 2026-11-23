@@ -18,7 +18,7 @@ salary, blacklist, seniority, template or submission authorization is a default.
 1. Read [getting started](document/getting-started.md) for a new user or missing
    setup; for continuation read only the relevant section and committed local
    state. Identify whether this is onboarding, a new job, a revision or recovery.
-2. Run `./tools/bootstrap`, then `./tools/careerkit doctor`. Only missing selected
+2. Run `./tools/bootstrap`. A ready local installation is reused offline. Only missing selected
    backend dependencies should require new document software. Never demand a
    tool merely because a different user once used it.
 3. Use `./tools/careerkit verify` before mutation and `./tools/careerkit status`

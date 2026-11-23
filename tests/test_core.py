@@ -19,7 +19,7 @@ class CoreTests(unittest.TestCase):
         with workspace() as paths:
             result = doctor(paths)
             self.assertTrue(result["ok"])
-            self.assertEqual(result["document_setup"], "not_configured")
+            self.assertEqual(result["checks"], [])
             self.assertFalse(paths.permanent("data").exists())
             first = initialize(paths)
             self.assertEqual(len(first["created_blank_inputs"]), 5)

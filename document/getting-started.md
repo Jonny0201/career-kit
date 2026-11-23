@@ -8,7 +8,7 @@ follow these stages and consult the linked command reference as needed.
 ## 1. Decide whether this is really a new setup
 
 Ask: is this a new candidate, an existing workspace, or a move to another
-machine? For an existing workspace run `doctor`/`verify` and resume exact records;
+machine? For an existing workspace run `status` and resume exact records;
 do not call empty inputs confirmed or overwrite previous history. Never inherit
 parent-directory settings, a contributor's preferences or test identities.
 
